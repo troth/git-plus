@@ -119,6 +119,10 @@ def parse_cmd_line ():
                         help=("Add arg to list of projects to work on. "
                               "Can be given multiple times. Each PROJECT value can be "
                               "a ':' separated list of projects."))
+    parser.add_argument('-q', '--quiet',
+                        action='store_true',
+                        dest='be_quiet',
+                        help='If project unchanged, do not output anything.')
 
     opts,git_args = parser.parse_known_args(args=multi_args)
     git_args.extend(g_args)
@@ -165,6 +169,10 @@ def parse_cmd_line ():
 def process_project(current_path, file_name, options):
     dir_path = mod_path.join(current_path, file_name)
     mod_os.chdir(dir_path)
+
+    if not mod_gitutils.is_changed():
+        if options.be_quiet:
+            return
 
     output = ''
 
