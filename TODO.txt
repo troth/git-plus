@@ -11,3 +11,5 @@ DONE - Commits are a problem right now.
     Maybe we can fix this?
     
 - Ability to specifiy a list of repos to work on
+
+- Show repos not on specified branch
