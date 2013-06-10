@@ -10,3 +10,4 @@ DONE - Commits are a problem right now.
 - this doesn't work with subdirectories, so any repos in directories below don't get handled.
     Maybe we can fix this?
     
+- Ability to specifiy a list of repos to work on
