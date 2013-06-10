@@ -71,7 +71,7 @@ def process_project(current_path, file_name):
     mod_os.chdir(dir_path)
 
     if not mod_gitutils.is_changed():
-        if only_if_changed and be_quiet:
+        if be_quiet:
             return
 
     output = ''
@@ -93,10 +93,10 @@ def process_project(current_path, file_name):
                 print output
 
     if execute:
-        executed, result = mod_gitutils.execute_command(git_command, output=do_output, prefix=PREFIX, grep=grep)
+        rc, result = mod_gitutils.execute_command(git_command, output=do_output, prefix=PREFIX, grep=grep)
         result = result.rstrip()
 
-        if not executed:
+        if rc != 0:
             output = '\tError executing:%s' % git_command
         elif result:
             output = result
@@ -159,35 +159,39 @@ if mod_path.exists('.multigit_ignore'):
 
 # Execute backup?
 if backup:
+    print 'This feature is broken, use git clone. JAS'
+    mod_sys.exit(1)
+
     now = mod_datetime.datetime.now()
     now = now.strftime('%Y-%m-%d-%H-%M')
     tar_name = 'git-repositories-%s.tar' % (now)
 
-    executed, output = mod_gitutils.execute_command('tar cvf %s */.git */.gitignore' % tar_name, output = True)
+    tar_command = ['tar', 'csf', tar_name, '*/.git', '*/.gitignore']
+    rc, output = mod_gitutils.execute_command(tar_command, output = True)
 
     print 'Saved git repositories to %s' % tar_name
 
-    mod_sys.exit(0)
+    mod_sys.exit(rc)
 
 grep = None
 
 # If no specific command is entered (i.e. only 'git multi'):
-git_command = 'status -s'
+git_command = ['status', '-s']
 if args:
-    git_command = ' '.join(args)
+    git_command = args
 
 if branch_verbose:
-    git_command = 'branch -v'
+    git_command = ['branch', '-v']
     group_by_output = True
     grep = '* '
 elif branch:
-    git_command = 'branch'
+    git_command = ['branch']
     grep = '* '
 
-if git_command.startswith('gitk'):
+if git_command[0] == 'gitk':
     git_command = git_command
 else:
-    git_command = 'git %s' % git_command
+    git_command.insert(0, 'git')
 
 print '--------------------------------------------------------------------------------'
 if grep:

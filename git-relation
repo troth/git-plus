@@ -42,19 +42,18 @@ if len(branches) != 2:
     mod_sys.exit(1)
 
 def get_git_sha1(branch_name):
-    success, sha1 = mod_gitutils.execute_git('log -1 %s --format=%%H' % branch_name,
-                                             output=False)
-    if not success:
+    rc, sha1 = mod_gitutils.execute_git(['log', '-1', branch_name, '--format=%%H'], output=False)
+    if rc != 0:
         print 'Invalid branch %s' % branch_name
         mod_sys.exit(1)
     return sha1.strip()
 
 def print_log(commit_1, commit_2):
     print 'Commits from \033[1;34m%s\033[1;m to \033[1;34m%s\033[1;m:' % (commit_1, commit_2)
-    success, log = mod_gitutils.execute_git(
-            'log %s..%s --format="  %%h %%Cgreen%%an%%Creset \"%%Cred%%s%%Creset\", %%ar"' % (commit_1, commit_2),
+    rc, log = mod_gitutils.execute_git(
+            ['log', '%s..%s' % (commit_1, commit_2), r"--format=  %h %Cgreen%an%Creset '%Cred%s%Creset', %ar"],
             output=False)
-    if not success:
+    if rc != 0:
         print 'Error retrieving log %s..%s' % (commit_1, commit_2)
         mod_sys.exit(1)
     print log.rstrip()
@@ -65,10 +64,9 @@ branch_2 = branches[1]
 branch_1_sha1 = get_git_sha1(branch_1)
 branch_2_sha1 = get_git_sha1(branch_2)
 
-success, merge_base = mod_gitutils.execute_git('merge-base %s %s' % (branch_1, branch_2),
-                                               output=False)
+rc, merge_base = mod_gitutils.execute_git(['merge-base', branch_1, branch_2], output=False)
 merge_base = merge_base.strip()
-if not success:
+if rc != 0:
     print 'Can\'t find merge base for %s and %s' % (branch_1, branch_2)
     mod_sys.exit(1)
 
