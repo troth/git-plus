@@ -1,0 +1,11 @@
+DONE - Commits are a problem right now.
+    -m doesn't work because of popen, must use a file
+
+    this fix is to use subprocess
+    
+- -q doesn't make sense for some of the commands
+
+- parallelize all the git calls
+
+- 
+    
