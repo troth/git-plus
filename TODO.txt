@@ -7,5 +7,6 @@ DONE - Commits are a problem right now.
 
 - parallelize all the git calls
 
-- 
+- this doesn't work with subdirectories, so any repos in directories below don't get handled.
+    Maybe we can fix this?
     
