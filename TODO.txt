@@ -1,11 +1,16 @@
-DONE - Commits are a problem right now.
-    -m doesn't work because of popen, must use a file
+- MULTI: -q doesn't make sense for some of the commands
 
-    this fix is to use subprocess
+- MULTI: Parallelize all the git calls. This will require fairly
+  intrusive changes to how git commands are executed.
+
+- MULTI: Fix commits so that if you don't give a -F or -m on command
+  line, the commit message is created for the first repo and reused
+  for all repos.
     
-- -q doesn't make sense for some of the commands
+- MULTI: Rework argument processing to use argparse module (be
+  consistent with git-old-branches).
 
-- parallelize all the git calls
+- MULTI: Add man pages so 'git help multi' will work.
 
 - this doesn't work with subdirectories, so any repos in directories below don't get handled.
     Maybe we can fix this?
@@ -22,3 +27,7 @@ Traceback (most recent call last):
   File "/Users/junrue/bin/git-plus/git-multi", line 48, in get_arg
     result = args[i + 1]
 IndexError: list index out of range
+
+- MULTI: Add --help option.
+
+- MULTI: Add feature to report which repos lack a branch.
