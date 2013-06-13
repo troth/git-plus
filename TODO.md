@@ -12,22 +12,24 @@
 
 - MULTI: Add man pages so 'git help multi' will work.
 
-- this doesn't work with subdirectories, so any repos in directories below don't get handled.
-    Maybe we can fix this?
+- MULTI: This doesn't work with subdirectories, so any repos in
+  directories below don't get handled.  Maybe we can fix this?
     
-- Ability to specifiy a list of repos to work on
+- MULTI: Ability to specifiy a list of repos to work on.
 
-- Show repos not on specified branch
+- MULTI: Bad arguments cause stack trace.
 
-- Bad arguments cause stack trace
-$ git multi -p
-Traceback (most recent call last):
-  File "/Users/junrue/bin/git-plus/git-multi", line 146, in <module>
-    single_project = get_arg(args, 'p', 'project')
-  File "/Users/junrue/bin/git-plus/git-multi", line 48, in get_arg
-    result = args[i + 1]
-IndexError: list index out of range
+  Example:
+
+      $ git multi -p
+      Traceback (most recent call last):
+        File "/Users/junrue/bin/git-plus/git-multi", line 146, in <module>
+          single_project = get_arg(args, 'p', 'project')
+        File "/Users/junrue/bin/git-plus/git-multi", line 48, in get_arg
+          result = args[i + 1]
+      IndexError: list index out of range
 
 - MULTI: Add --help option.
 
 - MULTI: Add feature to report which repos lack a branch.
+  Show repos not on specified branch.
