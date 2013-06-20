@@ -28,6 +28,14 @@ Switch to "master" for all repositories:
 
     git multi checkout master
 
+Make the output quiet - don't show repositories with no change
+
+    git multi -q status
+
+Show all repositories that are not on the specified branch
+
+    git multi -B <branch name>
+
 Create a "test" branch on all repositories and checkout it immediately:
 
     git multi checkout -b test
