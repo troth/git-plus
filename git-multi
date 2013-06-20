@@ -93,6 +93,9 @@ def parse_cmd_line ():
     parser.add_argument('--branch-verbose',
                         action='store_true',
                         help='Verbose branch information (same as --branch, but more verbose)')
+    parser.add_argument('-B', '--branch-name',
+                        action='store',
+                        help='Show projects not on specified branch')
     parser.add_argument('-c', '--changed',
                         action='store_true',
                         dest='only_if_changed',
@@ -165,7 +168,7 @@ def process_project(current_path, file_name, options):
 
     output = ''
 
-    if options.group_by_output:
+    if options.group_by_output or options.branch_name:
         do_output = False
     else:
         do_output = True
@@ -187,6 +190,11 @@ def process_project(current_path, file_name, options):
 
         if not executed:
             output = '\tError executing:%s' % git_command
+        elif options.branch_name:
+            # Only output repos not on branch
+            branch_name_differs = (options.branch_name != result.strip())
+            if branch_name_differs:
+                print '\tCurrent branch: %s' % result
         elif result:
             output = result
         else:
@@ -243,9 +251,9 @@ if git_args:
 if options.branch_verbose:
     git_command = ['branch', '-v']
     grep = '* '
-elif options.branch:
-    git_command = ['branch']
-    grep = '* '
+elif options.branch or options.branch_name:
+    git_command = ['rev-parse', '--abbrev-ref', 'HEAD']
+
 
 if git_command[0] == 'gitk':
     git_command = git_command
