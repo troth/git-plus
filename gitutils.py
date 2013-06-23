@@ -7,6 +7,8 @@ import os as mod_os
 import os.path as mod_path
 import sys as mod_sys
 import subprocess as mod_subprocess
+import tempfile as mod_tempfile
+import re as mod_re
 
 def assert_in_git_repository():
     rc, lines = execute_git(['status'], output=False)
@@ -15,19 +17,71 @@ def assert_in_git_repository():
         print lines
         mod_sys.exit(1)
 
-def execute_command(command, output=True, prefix='', grep=None):
-    result = ''
-    p = mod_subprocess.Popen(command, stdout=mod_subprocess.PIPE, stderr=mod_subprocess.STDOUT)
-    for line in p.stdout:
-        output_line = prefix + ('%s' % line).rstrip() + '\n'
-        if not grep or grep in output_line:
-            if output and output_line:
-                print output_line.rstrip()
-                mod_sys.stdout.flush()
-            result += output_line
+class ExecuteCommand(object):
+    '''Class to execute a command as a subprocess.
 
-    p.stdout.close()
+    The class encapsulation allows running multiple commands in
+    parallel.
+    '''
+    def __init__(self, command):
+        self.command = command
+
+        self.proc = None
+        self.rc = None
+        self.output = None
+
+        self.tempfile = mod_tempfile.NamedTemporaryFile(prefix='multigit-',
+                                                        dir='/tmp')
+        self.proc = mod_subprocess.Popen(command,
+                                         stdout=self.tempfile,
+                                         stderr=mod_subprocess.STDOUT)
+
+    def wait(self):
+        if self.proc is not None:
+            self.rc = self.proc.wait()
+            self.proc = None
+
+        return self.rc
+
+    def read(self):
+        self.tempfile.file.seek(0)
+        return self.tempfile.read()
+
+    def readline(self):
+        return self.tempfile.readline()
+
+    def readlines(self):
+        self.tempfile.file.seek(0)
+        for line in self.tempfile.readlines():
+            yield line
+
+    def grep(self, regex):
+        re_grep = mod_re.compile(regex)
+        for line in self.readlines():
+            if re_grep.match(line):
+                yield line
+
+    def result(self, do_output=True, prefix='', grep=None):
+        result = []
+        for line in self.readlines():
+            if not grep or grep in line:
+                line = prefix + line.rstrip()
+                result.append(line)
+                if do_output:
+                    print line
+                    mod_sys.stdout.flush()
+        return '\n'.join(result)
+
+    def close(self):
+        if not self.tempfile.close_called:
+            self.tempfile.close()
+
+
+def execute_command(command, output=True, prefix='', grep=None):
+    p = ExecuteCommand(command)
     rc = p.wait()
+    result = p.result(output, prefix, grep)
+
     return (rc, result)
 
 def execute_git(command, output=True, prefix='', grep=None):
