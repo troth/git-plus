@@ -176,56 +176,29 @@ def get_project_list(ignore_list=None):
                 projects.append (file_name)
     return projects
 
-def process_project(current_path, file_name, options):
-    if options.exclude and file_name in options.exclude:
-        return
-
-    dir_path = '%s/%s' % (current_path, file_name)
-    mod_os.chdir(dir_path)
-
-    if not mod_gitutils.is_changed():
-        if options.be_quiet:
-            return
-
-    output = ''
-
-    if options.group_by_output or options.branch_name:
-        do_output = False
-    else:
-        do_output = True
-
+def process_project(repo_name, proc, do_output, options):
     if not options.group_by_output:
-        print '%s:' % file_name
+        print '%s:' % repo_name
 
-    execute = True
-    if options.only_if_changed:
-        execute = mod_gitutils.is_changed()
-        if not execute:
-            output = PREFIX + 'Not changed'
-            if do_output:
-                print output
+    result = proc.result(do_output, PREFIX, grep)
 
-    if execute:
-        rc, result = mod_gitutils.execute_command(git_command, output=do_output, prefix=PREFIX, grep=grep)
-        result = result.rstrip()
-
-        if rc != 0:
-            output = '\tError executing:%s' % git_command
-        elif options.branch_name:
-            # Only output repos not on branch
-            branch_name_differs = (options.branch_name != result.strip())
-            if branch_name_differs:
-                print '\tCurrent branch: %s' % result
-        elif result:
-            output = result
-        else:
-            output = '\tOK'
+    if proc.rc != 0:
+        output = '\tError executing: %s' % proc.command
+    elif options.branch_name:
+        # Only output repos not on branch
+        branch_name_differs = (options.branch_name != result.strip())
+        if branch_name_differs:
+            print '\tCurrent branch: %s' % result
+    elif result:
+        output = result
+    else:
+        output = '\tOK'
 
     if options.group_by_output:
         if outputs.has_key(output):
-            outputs[output].append(file_name)
+            outputs[output].append(repo_name)
         else:
-            outputs[output] = [file_name]
+            outputs[output] = [repo_name]
 
 options,git_args = parse_cmd_line()
 
@@ -242,7 +215,7 @@ if options.archive:
     repos = get_project_list ()
 
     dot_gitignores = []
-    for repo in repos:
+    for repo in sorted(repos):
         for root, dirs, files in mod_os.walk(repo):
             if '.git' in dirs:
                 dirs.remove('.git')
@@ -295,18 +268,55 @@ if options.show_progress and options.group_by_output:
     print 'Progress:',
     mod_sys.stdout.flush()
 
+repo_jobs = {}
 # Execute command on all subdirectories:
 for file_name in mod_os.listdir('.'):
+    mod_os.chdir(current_path)
+
     if not options.project_list or file_name in options.project_list:
-        mod_os.chdir(current_path)
+        if file_name in options.exclude:
+            continue
 
-        if mod_path.isdir(file_name):
-            if mod_path.exists('%s/.git' % file_name):
-                process_project(current_path, file_name, options)
+        if mod_path.isdir(file_name) and mod_path.exists('%s/.git' % file_name):
+            mod_os.chdir(mod_path.join(current_path, file_name))
 
-                if options.show_progress and options.group_by_output:
-                    print '*',
-                    mod_sys.stdout.flush()
+            is_changed = mod_gitutils.is_changed()
+
+            if not is_changed and options.be_quiet:
+                continue
+
+            do_execute = True
+            if options.only_if_changed:
+                do_execute = is_changed
+
+            if do_execute:
+                repo_jobs[file_name] = mod_gitutils.ExecuteCommand(git_command)
+            else:
+                output = PREFIX + 'Not changed'
+                if do_output:
+                    print output
+                if options.group_by_output:
+                    outputs.setdefault(output, []).append(file_name)
+
+# Wait for all jobs to complete.
+for repo, proc in repo_jobs.items():
+    proc.wait()
+
+if options.group_by_output or options.branch_name:
+    do_output = False
+else:
+    do_output = True
+
+# Process the output from all the jobs.
+for repo in sorted(repo_jobs):
+    proc = repo_jobs[repo]
+
+    process_project(repo, proc, do_output, options)
+
+    if options.show_progress and options.group_by_output:
+        print '*',
+        mod_sys.stdout.flush()
+
 if options.show_progress and options.group_by_output:
     print
     print '--------------------------------------------------------------------------------'
@@ -314,17 +324,14 @@ if options.show_progress and options.group_by_output:
 # If group_by_output, then output them now:
 if options.group_by_output:
     result_outputs = []
-    output_keys = outputs.keys()
-    output_keys.sort()
-    for output in output_keys:
+    for output in sorted(outputs):
         projects = outputs[output]
         projects.sort()
 
         result_outputs.append([', '.join(projects) + ':', output])
         print
 
-    result_outputs.sort()
-    for key, value in result_outputs:
+    for key, value in sorted(result_outputs):
         print key
         print value
         print
