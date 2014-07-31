@@ -285,7 +285,7 @@ if options.show_progress and options.group_by_output:
     mod_sys.stdout.flush()
 
 # Execute command on all subdirectories:
-for file_name in mod_os.listdir('.'):
+for file_name in mod_gitutils.get_project_list():
     if not options.project_list or file_name in options.project_list:
         mod_os.chdir(current_path)
 
