@@ -86,7 +86,7 @@ def parse_cmd_line ():
                                          formatter_class=mod_argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-a', '--archive',
                         action='store_true',
-                        help='Archive prjects to a tarball.')
+                        help='Archive projects to a tarball.')
     parser.add_argument('-b', '--branch',
                         action='store_true',
                         help='Output only the current branch for all projects.')
