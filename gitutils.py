@@ -93,3 +93,13 @@ def is_changed():
     merge_not_finished = mod_path.exists('.git/MERGE_HEAD')
     return changed_lines or merge_not_finished
 
+def get_project_list(ignore_list=None):
+    projects = []
+    for file_name in mod_os.listdir('.'):
+        if mod_path.isdir(file_name):
+            if ignore_list and file_name in ignore_list:
+                continue
+
+            if mod_path.exists('%s/.git' % file_name):
+                projects.append (file_name)
+    return projects
