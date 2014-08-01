@@ -94,18 +94,27 @@ def is_changed():
     merge_not_finished = mod_path.exists('.git/MERGE_HEAD')
     return changed_lines or merge_not_finished
 
-def get_project_list_from_search(ignore_list=None):
+def get_project_list_from_search(ignore_dirs, max_depth):
     projects = []
-    for file_name in mod_os.listdir('.'):
-        if mod_path.isdir(file_name):
-            if ignore_list and file_name in ignore_list:
-                continue
+    for root, dirs, files in mod_os.walk('.'):
+        if '.git' in dirs:
+            dirs.remove('.git') # don't visit '.git' dirs.
+            if root.startswith('./'):
+                root = root[2:]
+            if root not in ignore_dirs:
+                projects.append(root)
 
-            if mod_path.exists('%s/.git' % file_name):
-                projects.append (file_name)
+        if max_depth and len(root.split('/')) > max_depth:
+            dirs[:] = [] # Don't traverse any deeper by removing all dirs.
+
+        if ignore_dirs:
+            for ign in ignore_dirs:
+                if ign in dirs:
+                    dirs.remove(ign) # don't visit ignored dirs.
+
     return projects
 
-def get_project_list_from_manifest(manifest, ignore_list):
+def get_project_list_from_manifest(manifest, ignore_dirs):
     projects = []
     tree = mod_et.parse(manifest)
     root = tree.getroot()
@@ -116,7 +125,7 @@ def get_project_list_from_manifest(manifest, ignore_list):
             continue
 
         if mod_path.isdir(path):
-            if ignore_list and path in ignore_list:
+            if ignore_dirs and path in ignore_dirs:
                 continue
 
             if mod_path.exists('%s/.git' % path):
@@ -124,9 +133,11 @@ def get_project_list_from_manifest(manifest, ignore_list):
 
     return projects
 
-def get_project_list(ignore_list=None):
+def get_project_list(ignore_dirs, max_depth):
     manifest = '.repo/manifest.xml'
     if mod_path.exists(manifest):
-        return get_project_list_from_manifest(manifest, ignore_list)
+        print '## Using project list from repo manifest.'
+        return get_project_list_from_manifest(manifest, ignore_dirs)
     else:
-        return get_project_list_from_search(ignore_list)
+        print '## Using project list from directory search.'
+        return get_project_list_from_search(ignore_dirs, max_depth)

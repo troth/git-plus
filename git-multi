@@ -112,6 +112,14 @@ def parse_cmd_line ():
                         dest='group_by_output',
                         default=multi_global_config['group_by_output'],
                         help='Projects with same git command output will be groupped together.')
+    parser.add_argument('--list-projects',
+                        action='store_true',
+                        help='Print a list of projects found and exit.')
+    parser.add_argument('--max-depth',
+                        action='store',
+                        type=int,
+                        default=0,
+                        help='Set the max directory depth to search for projects.')
     parser.add_argument('-p', '--project',
                         action='append',
                         metavar='PROJECT',
@@ -222,13 +230,19 @@ if options.debug:
     print 'OPTS:', options
     print 'GIT_ARGS:', git_args
 
+repos = mod_gitutils.get_project_list(options.exclude, options.max_depth)
+
+if options.list_projects:
+    print 'List of git projects under current directory:'
+    for repo in repos:
+        print '  ', repo
+    mod_sys.exit(0)
+
 # Execute backup?
 if options.archive:
     now = mod_datetime.datetime.now()
     now = now.strftime('%Y-%m-%d-%H-%M')
     tar_name = 'git-repositories-%s.tar' % (now)
-
-    repos = mod_gitutils.get_project_list ()
 
     dot_gitignores = []
     for repo in repos:
@@ -285,17 +299,16 @@ if options.show_progress and options.group_by_output:
     mod_sys.stdout.flush()
 
 # Execute command on all subdirectories:
-for file_name in mod_gitutils.get_project_list():
+for file_name in repos:
     if not options.project_list or file_name in options.project_list:
         mod_os.chdir(current_path)
 
-        if mod_path.isdir(file_name):
-            if mod_path.exists('%s/.git' % file_name):
-                process_project(current_path, file_name, options)
+        process_project(current_path, file_name, options)
 
-                if options.show_progress and options.group_by_output:
-                    print '*',
-                    mod_sys.stdout.flush()
+        if options.show_progress and options.group_by_output:
+            print '*',
+            mod_sys.stdout.flush()
+
 if options.show_progress and options.group_by_output:
     print
     print '--------------------------------------------------------------------------------'

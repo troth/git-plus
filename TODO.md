@@ -6,15 +6,9 @@
 - MULTI: Fix commits so that if you don't give a -F or -m on command
   line, the commit message is created for the first repo and reused
   for all repos.
-    
-- MULTI: Rework argument processing to use argparse module (be
-  consistent with git-old-branches).
 
-- MULTI: Add man pages so 'git help multi' will work.
+- MULTI: Add man pages so 'git help multi' and 'git multi --help' will work.
 
-- MULTI: This doesn't work with subdirectories, so any repos in
-  directories below don't get handled.  Maybe we can fix this?
-    
 - MULTI: Ability to specifiy a list of repos to work on.
 
 - MULTI: Bad arguments cause stack trace.
@@ -28,8 +22,6 @@
         File "/Users/junrue/bin/git-plus/git-multi", line 48, in get_arg
           result = args[i + 1]
       IndexError: list index out of range
-
-- MULTI: Add --help option.
 
 - MULTI: Add feature to report which repos lack a branch.
   Show repos not on specified branch.
