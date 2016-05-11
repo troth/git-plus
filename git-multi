@@ -159,11 +159,27 @@ if mod_path.exists('.multigit_ignore'):
 if backup:
     now = mod_datetime.datetime.now()
     now = now.strftime('%Y-%m-%d-%H-%M')
-    tar_name = 'git-repositories-%s.tar' % (now)
+    tar_name = 'git-repositories-%s.tar.xz' % (now)
 
-    executed, output = mod_gitutils.execute_command('tar cvf %s */.git */.gitignore' % tar_name, output=True)
+    repos = mod_gitutils.get_project_list ()
 
-    print 'Saved git repositories to %s' % tar_name
+    dot_gitignores = []
+    for repo in repos:
+        for root, dirs, files in mod_os.walk(repo):
+            if '.git' in dirs:
+                dirs.remove('.git')
+            if '.gitignore' in files:
+                dot_gitignores.append (mod_os.path.join(root, '.gitignore'))
+
+    tar_command = ['tar', 'cvJf', tar_name]
+    tar_command.extend(['%s/.git' % repo for repo in repos])
+    if dot_gitignores:
+        tar_command.extend(dot_gitignores)
+
+    executed, output = mod_gitutils.execute_command(tar_command, output=True)
+
+    if executed:
+        print 'Saved git repositories to %s' % tar_name
 
     mod_sys.exit(0)
 
