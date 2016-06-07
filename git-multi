@@ -54,8 +54,6 @@ them.
 # Prefix for git command output:
 PREFIX = '\t'
 
-current_path = mod_os.getcwd()
-
 # Check if to group results by output:
 # Set by:
 # 	git config --global 'multi.groupbyoutput' 1
@@ -226,7 +224,12 @@ if options.archive:
     now = now.strftime('%Y-%m-%d-%H-%M')
     tar_name = 'git-repositories-%s.tar.xz' % (now)
 
-    repos = mod_gitutils.get_project_list(options.exclude)
+    topdir, repos = mod_gitutils.get_project_list(options.exclude)
+    if topdir:
+        mod_path.chdir(topdir)
+    else:
+        sys.stderr.write('ERROR: no projects found')
+        mod_sys.exit(1)
 
     dot_gitignores = []
     for repo in repos:
@@ -278,18 +281,20 @@ print '-------------------------------------------------------------------------
 # Used when group_by_output == True, keys are output, values are a list of projects
 outputs = {}
 
+topdir, repos = mod_gitutils.get_project_list(options.exclude)
+
 if options.show_progress and options.group_by_output:
     mod_sys.stdout.write('Progress: ')
     mod_sys.stdout.flush()
 
-# Execute command on all subdirectories:
-for file_name in mod_gitutils.get_project_list(options.exclude):
+# Execute command on all repos:
+for file_name in repos:
     if not options.project_list or file_name in options.project_list:
-        mod_os.chdir(current_path)
+        mod_os.chdir(topdir)
 
         if mod_path.isdir(file_name):
             if mod_path.exists(mod_path.join(file_name, '.git')):
-                process_project(current_path, file_name, options)
+                process_project(topdir, file_name, options)
 
                 if options.show_progress and options.group_by_output:
                     mod_sys.stdout.write('*')

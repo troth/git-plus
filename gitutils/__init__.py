@@ -126,8 +126,33 @@ def get_project_list_from_search(ignore_list=None):
     return projects
 
 
-def get_project_list_from_manifest(manifest, ignore_list):
+def find_file(fn):
+    '''Find given file.
+
+    Walks up the path looking for filename (fn).
+
+    Returns a tuple of the path to the directory containing the file and the name of the
+    file if the file was found.
+
+    If the file was not found, returns (None, None).
+    '''
+    cwd = mod_os.getcwd()
+    while True:
+        #print 'CWD [%s]: %s' % (fn, cwd)
+        if mod_path.exists(mod_path.join(cwd, fn)):
+            return (cwd, fn)
+
+        if cwd == mod_path.sep:
+            return (None, None)
+
+        cwd = mod_path.split(cwd)[0]
+
+
+def get_project_list_from_manifest(topdir, manifest, ignore_list):
     projects = []
+    cwd = mod_os.getcwd()
+    mod_os.chdir(topdir)
+
     tree = mod_et.parse(manifest)
     root = tree.getroot()
 
@@ -142,11 +167,15 @@ def get_project_list_from_manifest(manifest, ignore_list):
 
             if mod_path.exists(mod_path.join(path, '.git')):
                 projects.append(path)
+    mod_os.chdir(cwd)
     return projects
 
 
-def get_project_list_from_config(config, ignore_list):
+def get_project_list_from_config(topdir, config, ignore_list):
     projects = []
+    cwd = mod_os.getcwd()
+    mod_os.chdir(topdir)
+
     with open(config) as cfg:
         for line in cfg:
             path = line.strip()
@@ -157,18 +186,22 @@ def get_project_list_from_config(config, ignore_list):
 
                 if mod_path.exists(mod_path.join(path, '.git')):
                     projects.append(path)
+    mod_os.chdir(cwd)
     return projects
 
 
 def get_project_list(ignore_list=None):
-    manifest = '.repo/manifest.xml'
-    config = '../.gitmulti'
-    if mod_path.exists(config):
-        print '## Using project list from .gitmulti config file.'
-        return get_project_list_from_config(config, ignore_list)
-    elif mod_path.exists(manifest):
-        print '## Using project list from repo manifest.'
-        return get_project_list_from_manifest(manifest, ignore_list)
-    else:
-        print '## Using project list from directory search.'
-        return get_project_list_from_search(ignore_list)
+    topdir, cfg = find_file('.gitmulti')
+    if topdir:
+        print '## Using project list from .gitmulti config file: %s' % mod_path.join(topdir, cfg)
+        return topdir, get_project_list_from_config(topdir, cfg, ignore_list)
+
+    topdir, cfg = find_file(mod_path.join('.repo', 'manifest.xml'))
+    if topdir:
+        print '## Using project list from repo manifest %s' % mod_path.join(topdir, cfg)
+        return topdir, get_project_list_from_manifest(topdir, cfg, ignore_list)
+
+    # TODO: Walk up the current path looking for grand parent of .git directory
+    topdir = mod_os.getcwd()
+    print '## Using project list from directory search: %s' % topdir
+    return topdir, get_project_list_from_search(ignore_list)
