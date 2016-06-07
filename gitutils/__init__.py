@@ -109,7 +109,7 @@ def get_config_properties():
 def is_changed():
     """ Checks if current project has any noncommited changes. """
     executed, changed_lines = execute_git(['status', '--porcelain'], output=False)
-    merge_not_finished = mod_path.exists('.git/MERGE_HEAD')
+    merge_not_finished = mod_path.exists(mod_path.join('.git', 'MERGE_HEAD'))
     return changed_lines or merge_not_finished
 
 
@@ -120,6 +120,6 @@ def get_project_list(ignore_list=None):
             if ignore_list and file_name in ignore_list:
                 continue
 
-            if mod_path.exists('%s/.git' % file_name):
+            if mod_path.exists(mod_path.join(file_name, '.git')):
                 projects.append (file_name)
     return projects
