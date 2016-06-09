@@ -227,10 +227,9 @@ if group_by_output:
         projects.sort()
 
         result_outputs.append([', '.join(projects) + ':', output])
-        print
 
     result_outputs.sort()
     for key, value in result_outputs:
+        print
         print key
         print value
-        print
