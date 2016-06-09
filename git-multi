@@ -283,6 +283,10 @@ outputs = {}
 
 topdir, repos = mod_gitutils.get_project_list(options.exclude)
 
+if repos is None:
+    print 'No git repos found in `%s` or any parent directory.' % (mod_os.getcwd())
+    mod_sys.exit(1)
+
 if options.show_progress and options.group_by_output:
     mod_sys.stdout.write('Progress: ')
     mod_sys.stdout.flush()

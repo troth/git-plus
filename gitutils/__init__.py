@@ -114,16 +114,26 @@ def is_changed():
     return changed_lines or merge_not_finished
 
 
-def get_project_list_from_search(ignore_list=None):
+def get_project_list_from_search(topdir, ignore_list=None):
     projects = []
-    for file_name in mod_os.listdir('.'):
-        if mod_path.isdir(file_name):
+
+    for file_name in mod_os.listdir(topdir):
+        if mod_path.isdir(mod_path.join(topdir, file_name)):
             if ignore_list and file_name in ignore_list:
                 continue
 
-            if mod_path.exists(mod_path.join(file_name, '.git')):
+            if mod_path.exists(mod_path.join(topdir, file_name, '.git')):
                 projects.append (file_name)
-    return projects
+
+    if not projects:
+        if topdir == mod_path.sep:
+            # No projects found and we are at root dir, can't go any further.
+            return (None, None)
+        else:
+            # Try the parent directory
+            return get_project_list_from_search(mod_path.split(topdir)[0], ignore_list)
+
+    return topdir, projects
 
 
 def find_file(fn):
@@ -201,7 +211,6 @@ def get_project_list(ignore_list=None):
         print '## Using project list from repo manifest %s' % mod_path.join(topdir, cfg)
         return topdir, get_project_list_from_manifest(topdir, cfg, ignore_list)
 
-    # TODO: Walk up the current path looking for grand parent of .git directory
-    topdir = mod_os.getcwd()
-    print '## Using project list from directory search: %s' % topdir
-    return topdir, get_project_list_from_search(ignore_list)
+    topdir, projects = get_project_list_from_search(mod_os.getcwd(), ignore_list)
+    print '## Using project list from directory search: topdir=%s' % topdir
+    return topdir, projects
