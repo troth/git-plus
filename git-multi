@@ -191,14 +191,14 @@ print '-------------------------------------------------------------------------
 if grep:
     print 'Executing: %s | grep %s' % (' '.join(git_command), grep)
 else:
-    print 'Executing %s' % ' '.join(git_command)
+    print 'Executing: %s' % ' '.join(git_command)
 print '--------------------------------------------------------------------------------'
 
 # Used when group_by_output == True, keys are output, values are a list of projects
 outputs = {}
 
 if show_progress and group_by_output:
-    print 'Progress:',
+    mod_sys.stdout.write('Progress: ')
     mod_sys.stdout.flush()
 
 # Execute command on all subdirectories:
@@ -211,7 +211,7 @@ for file_name in mod_os.listdir('.'):
                 process_project(current_path, file_name)
 
                 if show_progress and group_by_output:
-                    print '*',
+                    mod_sys.stdout.write('*')
                     mod_sys.stdout.flush()
 if show_progress and group_by_output:
     print
